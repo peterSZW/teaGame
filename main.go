@@ -5,6 +5,7 @@ import (
     "os"
     "time"
 
+    "github.com/TheTitanrain/w32"
     tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -76,26 +77,26 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
                 m.selected[m.cursor] = struct{}{}
             }
 
-        case "w":
-            y -= 1
-            if y <= 0 {
-                y = 0
-            }
-        case "s":
-            y += 1
-            if y > 20 {
-                y = 20
-            }
-        case "a":
-            x -= 1
-            if x <= 0 {
-                x = 0
-            }
-        case "d":
-            x += 1
-            if x > 20 {
-                x = 20
-            }
+            // case "w":
+            //     y -= 1
+            //     if y <= 0 {
+            //         y = 0
+            //     }
+            // case "s":
+            //     y += 1
+            //     if y > 20 {
+            //         y = 20
+            //     }
+            // case "a":
+            //     x -= 1
+            //     if x <= 0 {
+            //         x = 0
+            //     }
+            // case "d":
+            //     x += 1
+            //     if x > 20 {
+            //         x = 20
+            //     }
         }
 
     case tickMsg:
@@ -123,6 +124,11 @@ func tick() tea.Cmd {
     })
 }
 
+func KeyIsPressing(key int) bool {
+    keyState := w32.GetAsyncKeyState(key)
+
+    return keyState&(1<<15) != 0
+}
 func view(mdl tea.Model) string {
     //m, _ := mdl.(model)
     // s := "What should we buy at the market?\n\n"
@@ -139,10 +145,33 @@ func view(mdl tea.Model) string {
     // }
     // s += "\nPress q to quit.\n"
 
+    if KeyIsPressing(w32.VK_UP) {
+
+        y -= 1
+        if y <= 0 {
+            y = 0
+        }
+    }
+    if KeyIsPressing(w32.VK_DOWN) {
+        y += 1
+        if y > 20 {
+            y = 20
+        }
+    }
+    if KeyIsPressing(w32.VK_LEFT) {
+        x -= 1
+        if x <= 0 {
+            x = 0
+        }
+    }
+    if KeyIsPressing(w32.VK_RIGHT) {
+        x += 1
+        if x > 20 {
+            x = 20
+        }
+    }
+
     s := ""
-    // for i := 0; i < 20; i++ {
-    //     s = s + lines[i] + "\n"
-    // }
 
     for i := 0; i < 20; i++ {
         for j := 0; j < 80; j++ {
@@ -156,6 +185,8 @@ func view(mdl tea.Model) string {
     }
 
     s += fmt.Sprintf("%d %d,%d", ii, x, y)
+    keyState := w32.GetAsyncKeyState(w32.VK_SHIFT)
+    s += fmt.Sprintf("%x", ii, x, y, keyState)
 
     // Send the UI for rendering
     return s
@@ -163,18 +194,10 @@ func view(mdl tea.Model) string {
 
 func main() {
 
-    s := ""
-    for i := 0; i < 80; i++ {
-        s = s + "."
-    }
-    for i := 0; i < 20; i++ {
-        lines = append(lines, s)
-    }
-
     p := tea.NewProgram(initialize, update, view)
     if err := p.Start(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
         os.Exit(1)
     }
-    fmt.Println(p)
+
 }
